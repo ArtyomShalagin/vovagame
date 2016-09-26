@@ -1,1 +1,204 @@
-hello world
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Играаать</title>
+    <style>
+        body {
+            background-color: #acc3e5;
+        }
+        canvas {
+            border: 3px #CCC solid;
+        }
+        #mainText {
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+<p id="mainText"><canvas id="myCanvas" height="700" width="700"></canvas></p>
+<script>
+    var mainCanvas = document.querySelector("#myCanvas");
+    var context = mainCanvas.getContext("2d");
+    var width = mainCanvas.width;
+    var height = mainCanvas.height;
+    var requestAnimationFrame = window.requestAnimationFrame ||
+            window.mozRequestAnimationFrame ||
+            window.webkitRequestAnimationFrame ||
+            window.msRequestAnimationFrame;
+
+    var fallen = 0;
+    var speed = .4;
+    var letterSpeed = 7;
+    var score = 0;
+    var wid = 70;
+    var hei = 85;
+
+    var stopped = false;
+
+    var img = new Image();
+    img.src = "files/vova.png";
+
+    var pony = new Image();
+    pony.src = "files/pony_1.png";
+
+    var text = [
+        "набери это предложение на клавиатуре",
+        "спаси поняшку от падения Вовы",
+        "и выиграй шоколадку, если дойдёшь до конца",
+        "представляешь себе, что будет, если упадет Вова?",
+        "поняшке конец!",
+        "ты не можешь этого допустить!",
+        "печатай быстрее, ведь скорость падения Вовы увеличивается",
+        "думаешь, ускорение свободного падения куда-то делось?",
+        "как же ты ошибаешься",
+        "как ты думаешь, сколько ещё ты выдержишь?",
+        "ты очень неплоха, раз ты дошла до этого места",
+        "давай усложним задачу",
+        "как насчет математики?",
+        "до шоколадки осталось совсем немного",
+        "но это будет трудное немного",
+        "sin(2x)=2*sin(x)*cos(x)",
+        "tg(3x)=(tg(x)-tg(x)^3)/(1-3tg(x)^2)",
+        "рили, я не верю, что ты дошла до этого места",
+        "если это так, делай скрин и я должен тебе шоколадку",
+        "пока"];
+    var pointer = 0;
+    var sentence = text[pointer];
+    var currSent = new Array();
+    for (var i = 0; i < sentence.length; i++) {
+        currSent[i] = sentence.charAt(i);
+    }
+    var flying = new Array();
+
+    addEventListener("keypress", function(event) { readLetter(event) });
+
+    function draw() {
+        context.clearRect(0, 0, width, height);
+
+        context.fillStyle = "#EEEEEE";
+        context.fillRect(0, 0, width, height);
+
+        context.beginPath();
+        context.drawImage(img, width / 2 - wid / 2, fallen, wid, hei);
+        context.closePath();
+
+        context.fillStyle = "black";
+        context.fillRect(0, height - 72, width, 2);
+
+        context.font = "18px Verdana";
+        context.fillStyle = "black";
+        context.textAlign = "left";
+        context.fillText("Score: " + Math.floor(score), 10, 30);
+        context.textAlign = "center";
+        if (currSent[0] == ' ') {
+            currSent.shift();
+        }
+        sentence = "";
+        for (var i = 0; i < currSent.length; i++) {
+            sentence += currSent[i];
+        }
+        context.fillText(sentence, width / 2, height - 40);
+
+        for (var i = 0; i < flying.length; i++) {
+            var curr = flying[i];
+            var dy = curr.y - fallen, dx = width / 2 - curr.x;
+            var len = Math.sqrt(dy * dy + dx * dx);
+            var newLen = len - letterSpeed;
+            curr.x = width / 2 - dx * newLen / len;
+            curr.y = fallen + dy * newLen / len;
+            context.fillText(curr.value, curr.x, curr.y);
+            if (newLen < hei) {
+                flying[i].x = NaN;
+                fallen -= 5;
+            }
+        }
+
+        context.beginPath();
+        context.drawImage(pony, width / 2 - 50, height - 170, 100, 100);
+        context.closePath();
+        context.beginPath();
+        context.drawImage(img, width / 2 - wid / 2, fallen, wid, hei);
+        context.closePath();
+
+        fallen += speed;
+
+        score += .1;
+        speed += 0.00004;
+        if (fallen > height - hei - 160) {
+            speed = 0;
+            drawResult();
+        } else {
+            requestAnimationFrame(draw);
+        }
+    }
+
+    function drawResult() {
+        context.clearRect(0, 0, width, height);
+
+        context.fillStyle = "#EEEEEE";
+        context.fillRect(0, 0, width, height);
+
+        context.beginPath();
+        context.drawImage(img, width / 2 - wid / 2, fallen, wid, hei);
+        context.closePath();
+
+        context.beginPath();
+        context.drawImage(pony, width / 2 - 50, height - 170, 100, 100);
+        context.closePath();
+
+        context.fillStyle = "black";
+        context.fillRect(0, height - 72, width, 2);
+
+        context.fillText("You scored " + Math.floor(score) + ". Press R to restart", width / 2, 50);
+        stopped = true;
+    }
+
+    function restart() {
+        pointer = 0;
+        sentence = text[pointer];
+        for (var i = 0; i < sentence.length; i++) {
+            currSent[i] = sentence.charAt(i);
+        }
+        score = 0;
+        fallen = 0;
+        speed = .4;
+        stopped = false;
+        draw();
+    }
+
+    function readLetter(e) {
+        if (!stopped) {
+            var str = String.fromCharCode(e.charCode);
+            if (str.charAt(0) == currSent[0]) {
+                currSent.shift();
+                var s = "";
+                for (var i = 0; i < currSent.length; i++) {
+                    s += currSent[i];
+                }
+                flying[flying.length] = new Letter(width / 2 - context.measureText(s).width / 2, str);
+            }
+            if (currSent.length == 0) {
+                pointer++;
+                sentence = text[pointer];
+                for (var i = 0; i < sentence.length; i++) {
+                    currSent[i] = sentence.charAt(i);
+                }
+            }
+        } else {
+            var str = String.fromCharCode(e.charCode);
+            if (str.charAt(0) == 'r' || str.charAt(0) == 'к') {
+                restart();
+            }
+        }
+    }
+
+    function Letter(x, value) {
+        this.x = x;
+        this.y = height - 40;
+        this.value = value;
+    }
+    draw();
+</script>
+</body>
+</html>
